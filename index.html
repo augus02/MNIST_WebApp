@@ -44,16 +44,13 @@
 
 
         const getImgData = () => {
-            // Create a temporary canvas to draw a downscaled image.
             const tempCanvas = document.createElement('canvas');
             const tempContext = tempCanvas.getContext('2d');
             tempCanvas.width = 28;
             tempCanvas.height = 28;
-
-            // Draw the original canvas image to the temporary canvas, effectively resizing it.
+            
             tempContext.drawImage(canvas, 0, 0, 28, 28);
-
-            // Now, extract the image data from the temporary canvas.
+            
             const imageData = tempContext.getImageData(0, 0, 28, 28);
             const data = [];
             for (let i = 0; i < imageData.data.length; i += 4) {
@@ -64,7 +61,6 @@
         };
 
         const predictNumber = async () => {
-            // Get image from canvas
             const data = getImgData();
             const inputTensor = new ort.Tensor('float32', new Float32Array(data), [1, 1, 28, 28]);
 
@@ -76,9 +72,6 @@
         };
 
         function getPredictedNumber(prediction) {
-            // Implement logic to convert the model output to a predicted number
-            // This may depend on the structure and output format of your specific model
-            // For a simple example, assuming the model outputs probabilities for each digit:
             const maxIndex = prediction.indexOf(Math.max(...prediction));
             return maxIndex.toString();
         }
