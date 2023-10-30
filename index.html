@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Prediction</title>
+    <style>
+        canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Number Prediction</h1>
+    <canvas id="drawingCanvas" width="280" height="280"></canvas>
+    <button onclick="predictNumber()">Predict</button>
+    <button onclick="clearCanvas()">Clear</button>
+    <p id="predictionResult">Prediction: </p>
+
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script>
+       let canvas, context, model, loadingModelPromise;
+
+       canvas = document.getElementById('drawingCanvas');
+        context = canvas.getContext('2d');
+        context.lineWidth = 20;
+        context.lineCap = 'round';
+        context.strokeStyle = 'white';
+        context.fillStyle = 'black';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mouseup', stopDrawing);
+        
+        window.onload = async function () {
+            model = await ort.InferenceSession.create('onnx_mnist.onnx');
+        }
+
+
+        const getImgData = () => {
+            // Create a temporary canvas to draw a downscaled image.
+            const tempCanvas = document.createElement('canvas');
+            const tempContext = tempCanvas.getContext('2d');
+            tempCanvas.width = 28;
+            tempCanvas.height = 28;
+
+            // Draw the original canvas image to the temporary canvas, effectively resizing it.
+            tempContext.drawImage(canvas, 0, 0, 28, 28);
+
+            // Now, extract the image data from the temporary canvas.
+            const imageData = tempContext.getImageData(0, 0, 28, 28);
+            const data = [];
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                const gray = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3; // Average grayscale value
+                data.push((255 - gray) / 255); // Data normalization
+            }
+            return data;
+        };
+
+        const predictNumber = async () => {
+            // Get image from canvas
+            const data = getImgData();
+            const inputTensor = new ort.Tensor('float32', new Float32Array(data), [1, 1, 28, 28]);
+
+            const outputMap = await model.run({ 'input': inputTensor });
+            const prediction = outputMap['output'].data;
+            const predictedNumber = getPredictedNumber(prediction);
+
+            document.getElementById('predictionResult').innerText = 'Prediction: ' + predictedNumber;
+        };
+
+        function getPredictedNumber(prediction) {
+            // Implement logic to convert the model output to a predicted number
+            // This may depend on the structure and output format of your specific model
+            // For a simple example, assuming the model outputs probabilities for each digit:
+            const maxIndex = prediction.indexOf(Math.max(...prediction));
+            return maxIndex.toString();
+        }
+
+        let isDrawing = false;
+
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            context.beginPath();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            context.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            context.stroke();
+            context.beginPath();
+            context.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        }
+
+        function clearCanvas() {
+            context.fillStyle = 'black';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('predictionResult').innerText = 'Prediction: ';
+            context.fillStyle = 'black';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+        }
+    </script>
+</body>
+</html>
