@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Prediction</title>
+    <title>MNIST based calculator</title>
     <style>
         canvas {
             border: 1px solid #000;
@@ -11,20 +11,139 @@
         .prediction{
             font-size: 20px;
         }
+        .PredictPage{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align:center;
+        }
+        .calcButton{
+            height: 52px;
+            width: 52px;
+            align-items: center;
+            text-align: center;
+            margin: 10px;
+            font-size: 20px;
+        }
+        .calcButton:hover{
+            cursor: pointer;
+            background-color:rgb(77, 44, 21);
+            border-radius: 5px;
+            height: 52px;
+            width: 52px;
+            align-items: center;
+            text-align: center;
+            margin: 10px;
+            padding: 10px;
+            font-size: 20px;
+        }
+        .button{
+            height: 52px;
+            width: 100px;
+            align-items: center;
+            text-align: center;
+            margin: 10px;
+            font-size: 20px;
+        }
+        .canvasOp{
+            display: flex;
+            flex-direction: row;
+            align-items: top;
+            text-align: center;
+        }
+        .OpContainer{
+            border: 2px solid black;
+            border-radius: 10px;
+            background-color: grey;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-left: 10%;
+            width: 200px;
+        }
+        .OpLine{
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            text-align: center;
+        }
+        #result{
+            margin-left:10px;
+            margin-right:10px;
+            font-size: 20px;
+            border: 2px solid black;
+            border-radius: 10px;
+            min-width: 32px;
+            min-height: 32px;
+            background-color: lightgrey;
+            align-items: center;
+            text-align: center;
+        }
+        .OpWrapper{
+            margin-left: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 200px;
+        }
+        .buttons{
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            text-align: left;
+        }
+        .canvasWrapper{
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
     </style>
 </head>
 <body>
-    <div style='flex-direction: row'>
-        <h1>Number Prediction</h1>
-        <canvas id="drawingCanvas" width="280" height="280"></canvas>
-        <button onclick="predictNumber()">Predict</button>
-        <button onclick="clearCanvas()">Clear</button>
-        <p class='prediction' id="predictionResult">Prediction: </p>
-    </div>
+    <main class = 'PredictPage'>
+        <h1 style="margin:4%;">MNIST-based calculator</h1>
+        <div class="canvasOp">
+            <div class="canvasWrapper">
+                <h3>Draw a number in the canvas and use the buttons below to predict it</h3>
+                <canvas id="drawingCanvas" width="280" height="280"></canvas>
+                <div class="buttons">
+                    <button class='button' onclick="predictNumber()">Predict</button>
+                    <button class='button' onclick="clearCanvas()">Clear</button>
+                </div>
+                <p class='prediction' id="predictionResult">Current prediction: </p>
+            </div>
+            <div class="OpWrapper">
+                <h3>Or combine it with the buttons below for some calculus</h3>
+                <div class="OpContainer">
+                    <div class="OpLine">
+                        <button class="calcButton" onclick="add()">+</button>
+                        <button class="calcButton" onclick="sub()">-</button>
+                    </div>
+                    <div class="OpLine">
+                        <button class="calcButton" onclick="mul()">x</button>
+                        <button class="calcButton" onclick="div()">/</button>
+                    </div>
+                    <div class="OpLine">
+                        <button class="calcButton" onclick="calculate()">=</button>
+                        <button class="calcButton" onclick="c()">C</button>
+                    </div>
+                    <div class="OpLine">
+                        <p id="result">Calculation result</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
     <script>
-       let canvas, context, model, loadingModelPromise;
+       let canvas, context, model, loadingModelPromise, calculation, currentPrediction;
+       calculation="";
 
        canvas = document.getElementById('drawingCanvas');
         context = canvas.getContext('2d');
@@ -41,7 +160,6 @@
         window.onload = async function () {
             model = await ort.InferenceSession.create('onnx_mnist.onnx');
         }
-
 
         const getImgData = () => {
             const tempCanvas = document.createElement('canvas');
@@ -69,11 +187,104 @@
             const predictedNumber = getPredictedNumber(prediction);
 
             document.getElementById('predictionResult').innerText = 'Prediction: ' + predictedNumber;
+            return predictedNumber;
         };
 
         function getPredictedNumber(prediction) {
             const maxIndex = prediction.indexOf(Math.max(...prediction));
             return maxIndex.toString();
+        }
+
+        function add(){
+            predictNumber().then((p)=>{
+                console.log(p);
+                clearCanvas();
+                calculation+=p+"+";
+                calculation.replace(" ","");
+                console.log(calculation);
+                document.getElementById('predictionResult').innerText = 'Current prediction: ' + p;
+                return;
+            });  
+        }
+
+        function sub(){
+            predictNumber().then((p)=>{
+                console.log(p);
+                clearCanvas();
+                calculation+=p+"-";
+                calculation.replace(" ","");
+                console.log(calculation);
+                document.getElementById('predictionResult').innerText = 'Current prediction: ' + p;
+                return;
+            });  
+        }
+
+        function mul(){
+            predictNumber().then((p)=>{
+                console.log(p);
+                clearCanvas();
+                calculation+=p+"x";
+                calculation.replace(" ","");
+                console.log(calculation);
+                document.getElementById('predictionResult').innerText = 'Current prediction: ' + p;
+                return;
+            });  
+        }
+
+        function div(){
+            predictNumber().then((p)=>{
+                console.log(p);
+                clearCanvas();
+                calculation+=p+"/";
+                calculation.replace(" ","");
+                console.log(calculation);
+                document.getElementById('predictionResult').innerText = 'Current prediction: ' + p;
+                return;
+            });  
+        }
+
+        function calculate () {
+            predictNumber().then((p)=>{
+                calculation+=p;
+                calculation.replace(" ","");
+                calculation.replace(" ","");
+                const array = calculation.split("");
+                for(let j=0; j<array.length; j++){
+                    if(array[j]==" "){
+                        array.splice(j,1);
+                    }
+                }
+                let result = parseInt(array[0]);
+                for(let i = 0; i<array.length; i++){
+                    if(array[i]=="+"){
+                        result+=parseInt(array[i+1]);
+                    }
+                    else if(array[i]=="-"){
+                        result-=parseInt(array[i+1]);
+                    }
+                    else if(array[i]=="x"){
+                        result*=parseInt(array[i+1]);
+                    }
+                    else if(array[i]=="/"){
+                        result/=parseInt(array[i+1]);
+                    }
+                }
+                console.log(calculation);
+                console.log(array);
+                console.log(result);
+                document.getElementById('result').innerText = "Result: "+result;
+                document.getElementById('result').style.cssText = "font-size: 28px; border: 2px solid black; min-width: 52px; min-height: 52px; background-color: lightgrey; color: red;";
+                calculation = "";
+            });
+            // let p = document.getElementById('predictionResult').innerText.slice(11);
+            // calculation+=p;
+        }
+
+        function c(){
+            calculation = "";
+            document.getElementById('result').innerText = "Calculation result";
+            document.getElementById('result').style.cssText = "font-size: 20px; border: 2px solid black;";
+            clearCanvas();
         }
 
         let isDrawing = false;
@@ -104,7 +315,6 @@
             document.getElementById('predictionResult').innerText = 'Prediction: ';
             context.fillStyle = 'black';
             context.fillRect(0, 0, canvas.width, canvas.height);
-
         }
     </script>
 </body>
