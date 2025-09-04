@@ -179,6 +179,10 @@
         };
 
         const predictNumber = async () => {
+            if (!model) {
+                document.getElementById('predictionResult').innerText = 'Model not loaded yet. Please wait.';
+                return;
+            }
             const data = getImgData();
             const inputTensor = new ort.Tensor('float32', new Float32Array(data), [1, 1, 28, 28]);
 
